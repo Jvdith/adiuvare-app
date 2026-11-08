@@ -1,11 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import Layout from "../components/Layout";
 
 export default function Help() {
   const navigate = useNavigate();
 
   return (
-    <Layout>
+    
       <div className="page-content">
         <button className="header-back" onClick={() => navigate(-1)}>←</button>
 
@@ -55,6 +54,6 @@ export default function Help() {
         </div>
 
       </div>
-    </Layout>
+   
   );
 }

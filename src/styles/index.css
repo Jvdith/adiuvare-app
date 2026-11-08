@@ -23,9 +23,9 @@
   --text-muted: #a1a1aa;      
   --primary: #C5B3F0;         
   --primary-light: #2e2e35;   
-  --yellow: #a79a62;          
+  --yellow: #cebb67;          
   --yellow-text: #1a1a1a; 
-  --input-bg: #635979e0;        
+  --input-bg: #705e96e0;        
   --border-color: #3f3f46;    
   --card-bg: #27272a;
   --green: #6BCB9A;
@@ -84,4 +84,18 @@ a {
   color: var(--yellow-text);
   border: none;
   cursor: pointer;
+}
+
+.categories-scroll {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;    /* IE/Edge */
+}
+
+.categories-scroll::-webkit-scrollbar {
+  display: none;               /* Chrome/Safari */
 }
