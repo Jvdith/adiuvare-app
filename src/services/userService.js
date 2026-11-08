@@ -1,59 +1,100 @@
-const USERS_DB_KEY = 'adiuware_users';        
-const CURRENT_USER_KEY = 'adiuware_current';  
+const API_URL = 'http://localhost:8080/api/auth';
 
 
-function getUsersDB() {
-    return JSON.parse(localStorage.getItem(USERS_DB_KEY) || '[]');
-}
-
-function saveUsersDB(users) {
-    localStorage.setItem(USERS_DB_KEY, JSON.stringify(users));
-}
-
-
-export function createUser({ nombre, email, password, tipo }) {
-    const users = getUsersDB();
-
-    if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-        return { error: 'El correo ya está registrado' };
-    }
-
-    const newUser = {
-        id: Date.now(),
-        nombre,
-        email,
-        password,
-        tipo, 
-    };
-
-    saveUsersDB([...users, newUser]);
-    return { user: newUser };
-}
-
-
-export function validateLogin(email, password, tipoEsperado) {
-    const user = getUsersDB().find(u => u.email.toLowerCase() === email.toLowerCase());
-
-    if (!user) return { error: 'Usuario no existe' };
-    if (user.password !== password) return { error: 'Contraseña incorrecta' };
-
+export async function createUser({ nombre, email, password, tipo }) {
     
-    if (tipoEsperado && user.tipo !== tipoEsperado) {
-        const rolReal = user.tipo === 'asociacion' ? 'Asociación' : 'Voluntario';
-        return { error: `Esta cuenta es de tipo ${rolReal}` };
-    }
+    const tipoUsuario = tipo === 'asociacion' ? 'ASOCIACION' : 'VOLUNTARIO';
 
-    return { user };
+    try {
+        const res = await fetch(`${API_URL}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nombre: nombre,
+                correo: email,
+                contrasena: password,
+                tipoUsuario: tipoUsuario
+            })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            
+            return { error: data.error || 'Error al registrar el usuario' };
+        }
+
+       
+        setCurrentUser(data.token, data.usuario);
+        return { user: data.usuario };
+    } catch (error) {
+        return { error: 'Error de conexión con el servidor. ¿Está arrancado el backend?' };
+    }
 }
 
 
-export function setCurrentUser(user) {
-    sessionStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+export async function validateLogin(email, password) {
+    try {
+        const res = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                correo: email,
+                contrasena: password
+            })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+           
+            return { error: data.error || 'Error al iniciar sesión' };
+        }
+
+        setCurrentUser(data.token, data.usuario);
+        return { user: data.usuario };
+    } catch (error) {
+        return { error: 'Error de conexión con el servidor. ¿Está arrancado el backend?' };
+    }
+}
+
+
+export async function checkEmailExists(correo) {
+    try {
+        const res = await fetch(`${API_URL}/check-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ correo })
+        });
+        const data = await res.json();
+        return data.existe;
+    } catch (error) {
+        return false;
+    }
+}
+
+
+export function setCurrentUser(token, user) {
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('user', JSON.stringify(user));
 }
 
 export function getCurrentUser() {
-    const data = sessionStorage.getItem(CURRENT_USER_KEY);
+    const data = sessionStorage.getItem('user');
     return data ? JSON.parse(data) : null;
+}
+
+export function getToken() {
+    return sessionStorage.getItem('token');
+}
+
+export function estaLogueado() {
+  return !!sessionStorage.getItem('token');
+}
+
+export function logout() {
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
 }
 
 
@@ -61,41 +102,21 @@ export function updateCurrentUser(updates) {
     const current = getCurrentUser();
     if (!current) return null;
 
-    const updated = { ...current, ...updates };
-    setCurrentUser(updated);
-
     
-    const users = getUsersDB();
-    const idx = users.findIndex(u => u.id === current.id);
-    if (idx !== -1) {
-        users[idx] = { ...users[idx], ...updates };
-        saveUsersDB(users);
-    }
+    const updated = {
+        ...current,
+        nombre: updates.nombre || current.nombre,
+        correo: updates.email || current.correo,
+    };
 
+    sessionStorage.setItem('user', JSON.stringify(updated));
     return updated;
 }
-
-
-export function logout() {
-    sessionStorage.removeItem(CURRENT_USER_KEY);
-}
-
-
 
 export function updateAvatar(base64Image) {
     const current = getCurrentUser();
     if (!current) return null;
-
-    const updated = { ...current, avatar: base64Image };
-    setCurrentUser(updated);
-
-   
-    const users = getUsersDB();
-    const idx = users.findIndex(u => u.id === current.id);
-    if (idx !== -1) {
-        users[idx] = { ...users[idx], avatar: base64Image };
-        saveUsersDB(users);
-    }
-
+    const updated = { ...current, fotoPerfil: base64Image };
+    sessionStorage.setItem('user', JSON.stringify(updated));
     return updated;
 }
