@@ -16,10 +16,11 @@ export default function BottomNav() {
   const location = useLocation();
   const { theme } = useTheme();
   const isLight = theme === 'light';
+
   const user = getCurrentUser();
-  const isAsociacion = user?.tipo === 'asociacion';
+  const isAsociacion = user?.tipoUsuario === 'ASOCIACION' || user?.tipo === 'asociacion';
 
-
+  // Construimos los items: Favoritos SOLO si NO es asociación
   const items = [
     { path: '/home', icon: isLight ? front_hand : front_hand_white, label: 'Inicio' },
     { path: '/search', icon: isLight ? search : search_white, label: 'Buscar' },
@@ -60,7 +61,12 @@ export default function BottomNav() {
               transition: 'opacity 0.2s'
             }}
           >
-            <img src={item.icon} alt="" aria-hidden="true" style={{ width: '24px', height: '24px', display: 'block' }} />
+            <img
+              src={item.icon}
+              alt=""
+              aria-hidden="true"
+              style={{ width: '24px', height: '24px', display: 'block' }}
+            />
           </button>
         );
       })}

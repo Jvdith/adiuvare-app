@@ -11,7 +11,6 @@ import Help from './pages/Help';
 import NotFound from './pages/NotFound';
 import Search from './pages/Search';
 import Favorites from './pages/Favorites';
-import Notifications from './pages/Notifications';
 import MyInscriptions from './pages/MyInscriptions';
 import CreateEvent from './pages/CreateEvent';
 import EditEvent from './pages/EditEvent';
@@ -29,7 +28,6 @@ const router = createBrowserRouter([
   { path: "/profile", element: <Layout><ProtectedRoute><Profile /></ProtectedRoute></Layout> },
   { path: "/search", element: <Layout><ProtectedRoute><Search /></ProtectedRoute></Layout> },
   { path: "/favorites", element: <Layout><ProtectedRoute><Favorites /></ProtectedRoute></Layout> },
-  { path: "/notifications", element: <Layout><ProtectedRoute><Notifications /></ProtectedRoute></Layout> },
   { path: "/my-inscriptions", element: <Layout><ProtectedRoute><MyInscriptions /></ProtectedRoute></Layout> },
   { path: "/create-event", element: <Layout><ProtectedRoute><CreateEvent /></ProtectedRoute></Layout> },
   { path: "/edit-event/:id", element: <Layout><ProtectedRoute><EditEvent /></ProtectedRoute></Layout> },
