@@ -88,3 +88,12 @@ export async function deleteInscripcion(id) {
   const res = await fetch(`${API}/inscripciones/${id}`, { method: 'DELETE' });
   return res.json();
 }
+
+export async function updateFotoPerfil(idUsuario, base64Foto) {
+  const res = await fetch(`${API}/usuarios/${idUsuario}/foto`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fotoPerfil: base64Foto })
+  });
+  return res.json();
+}

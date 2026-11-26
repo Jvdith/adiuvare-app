@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
-import { getCurrentUser, updateCurrentUser, updateAvatar, logout } from '../services/userService';
+// 1. Quitamos updateAvatar de userService y añadimos updateFotoPerfil de apiService
+import { getCurrentUser, updateCurrentUser, logout } from '../services/userService';
+import { updateFotoPerfil } from '../services/apiService'; // <--- IMPORTANTE
 import Button from '../components/Button';
 import Input from '../components/Input';
 import BottomNav from '../components/BottomNav';
@@ -15,7 +17,7 @@ export default function Profile() {
   const [user, setUser] = useState(getCurrentUser());
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user?.nombre || '');
-  const [editEmail, setEditEmail] = useState(user?.email || '');
+  const [editEmail, setEditEmail] = useState(user?.correo || user?.email || '');
   const [error, setError] = useState('');
   const [avatarError, setAvatarError] = useState('');
   const fileInputRef = useRef(null);
@@ -49,41 +51,48 @@ export default function Profile() {
 
   const handleCancelEdit = () => {
     setEditName(user?.nombre || '');
-    setEditEmail(user?.email || '');
+    setEditEmail(user?.correo || user?.email || '');
     setError('');
     setIsEditing(false);
   };
 
-  
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setAvatarError('');
 
-   
+    // Validaciones (tipo y tamaño)
     if (!file.type.startsWith('image/')) {
       setAvatarError('Debe ser una imagen');
       return;
     }
-
-    
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 2 * 1024 * 1024) { // 2MB máximo
       setAvatarError('La imagen no puede superar 2 MB');
       return;
     }
 
-    
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const base64 = event.target.result;
-      const updated = updateAvatar(base64);
-      setUser(updated);
+
+      try {
+        // 1. Enviar al backend
+        await updateFotoPerfil(user.idUsuario, base64);
+
+        // 2. Actualizar el estado y el sessionStorage
+        const updatedUser = { ...user, fotoPerfil: base64 };
+        setUser(updatedUser);
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+
+      } catch (error) {
+        console.error(error);
+        setAvatarError('Error al guardar la foto en el servidor');
+      }
     };
-    reader.onerror = () => setAvatarError('Error al leer la imagen');
     reader.readAsDataURL(file);
   };
 
@@ -106,7 +115,7 @@ export default function Profile() {
       </div>
 
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        
+
         <div style={{ position: 'relative', width: '90px', height: '90px', margin: '0 auto 10px' }}>
           <div style={{
             width: '100%',
@@ -118,14 +127,15 @@ export default function Profile() {
             justifyContent: 'center',
             alignItems: 'center'
           }}>
+            {/* 2. CAMBIO AQUÍ: Usar user.fotoPerfil en lugar de user.avatar */}
             <img
-              src={user.avatar || avatarDefault}
+              src={user.fotoPerfil || avatarDefault}
               alt="Foto de perfil"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           </div>
 
-         
+
           <button
             onClick={handleAvatarClick}
             aria-label="Cambiar foto de perfil"
@@ -145,7 +155,7 @@ export default function Profile() {
               padding: 0
             }}
           >
-            
+
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
@@ -163,7 +173,7 @@ export default function Profile() {
             </svg>
           </button>
 
-         
+
           <input
             ref={fileInputRef}
             type="file"
@@ -201,7 +211,8 @@ export default function Profile() {
                 <img src={isLight ? edit : edit_white} alt="" aria-hidden="true" style={{ width: '18px', height: '18px', display: 'block' }} />
               </button>
             </div>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{user.email}</p>
+            {/* Uso user.correo o user.email por si acaso */}
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{user.correo || user.email}</p>
           </>
         )}
       </div>
